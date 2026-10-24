@@ -33,6 +33,7 @@ VALUE rb_cPrismDebugEncoding;
 
 ID rb_id_option_attach_comments;
 ID rb_id_option_command_line;
+ID rb_id_option_depth_maximum;
 ID rb_id_option_encoding;
 ID rb_id_option_filepath;
 ID rb_id_option_freeze;
@@ -273,6 +274,12 @@ build_options_i(VALUE key, VALUE value, VALUE argument) {
             }
 
             pm_options_command_line_set(options, command_line);
+        }
+    } else if (key_id == rb_id_option_depth_maximum) {
+        if (!NIL_P(value)) {
+            long long depth_maximum = NUM2LL(value);
+            if (depth_maximum <= 0) rb_raise(rb_eArgError, "depth_maximum must be positive");
+            pm_options_depth_maximum_set(options, (uint32_t) (depth_maximum > UINT32_MAX ? UINT32_MAX : depth_maximum));
         }
     } else if (key_id == rb_id_option_main_script) {
         if (!NIL_P(value)) pm_options_main_script_set(options, RTEST(value));
@@ -1092,6 +1099,16 @@ parse_input(const uint8_t *input, size_t input_length, const pm_options_t *optio
  * * `command_line` - either nil or a string of the various options that were
  *       set on the command line. Valid values are combinations of "a", "l",
  *       "n", "p", and "x".
+ * * `depth_maximum` - the nesting depth of expressions and patterns at which
+ *       the parser stops and reports a "nesting too deep" error. This should
+ *       be a positive integer or nil. A top-level expression is already at
+ *       depth 1 and every nested construct adds at least one, so very small
+ *       values reject ordinary code. It defaults to `PRISM_DEPTH_MAXIMUM`
+ *       (10000). Each level costs roughly 500-600 bytes of native stack, so
+ *       the default needs several megabytes and a 1 MB thread fits about
+ *       1000-1500; lower it when parsing on a thread with a small stack, and
+ *       raising it above the default needs a correspondingly larger stack.
+ *       Values above 65535 are treated as 65535.
  * * `encoding` - the encoding of the source being parsed. This should be an
  *       encoding or nil.
  * * `filepath` - the filepath of the source being parsed. This should be a
@@ -1711,6 +1728,7 @@ Init_prism(void) {
      * do it every time we parse. */
     rb_id_option_attach_comments = rb_intern_const("attach_comments");
     rb_id_option_command_line = rb_intern_const("command_line");
+    rb_id_option_depth_maximum = rb_intern_const("depth_maximum");
     rb_id_option_encoding = rb_intern_const("encoding");
     rb_id_option_filepath = rb_intern_const("filepath");
     rb_id_option_freeze = rb_intern_const("freeze");

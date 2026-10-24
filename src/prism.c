@@ -17938,7 +17938,7 @@ static pm_node_t *
 parse_pattern(pm_parser_t *parser, pm_constant_id_set_t *captures, uint8_t flags, pm_diagnostic_id_t diag_id, uint16_t depth) {
     /* Nested patterns recurse back into parse_pattern without passing through
      * parse_expression, so this cycle needs its own depth check. */
-    if (PRISM_UNLIKELY(depth >= PRISM_DEPTH_MAXIMUM)) {
+    if (PRISM_UNLIKELY(depth >= parser->depth_maximum)) {
         pm_parser_err_current(parser, PM_ERR_NESTING_TOO_DEEP);
         return UP(pm_error_recovery_node_create(parser, PM_TOKEN_START(parser, &parser->current), PM_TOKEN_LENGTH(&parser->current)));
     }
@@ -22907,7 +22907,7 @@ parse_expression_terminator(pm_parser_t *parser, pm_node_t *node) {
  */
 static pm_node_t *
 parse_expression(pm_parser_t *parser, pm_binding_power_t binding_power, uint8_t flags, pm_diagnostic_id_t diag_id, uint16_t depth) {
-    if (PRISM_UNLIKELY(depth >= PRISM_DEPTH_MAXIMUM)) {
+    if (PRISM_UNLIKELY(depth >= parser->depth_maximum)) {
         pm_parser_err_current(parser, PM_ERR_NESTING_TOO_DEEP);
         return UP(pm_error_recovery_node_create(parser, PM_TOKEN_START(parser, &parser->current), PM_TOKEN_LENGTH(&parser->current)));
     }
@@ -23312,6 +23312,7 @@ pm_parser_init(pm_arena_t *arena, pm_parser_t *parser, const uint8_t *source, si
         .parsing_eval = false,
         .partial_script = false,
         .attach_comments = false,
+        .depth_maximum = PRISM_DEPTH_MAXIMUM,
         .command_start = true,
         .recovering = false,
         .continuable = true,
@@ -23381,6 +23382,11 @@ pm_parser_init(pm_arena_t *arena, pm_parser_t *parser, const uint8_t *source, si
 
         // attach_comments
         parser->attach_comments = options->attach_comments;
+
+        // depth_maximum option
+        if (options->depth_maximum > 0) {
+            parser->depth_maximum = (uint16_t) (options->depth_maximum > UINT16_MAX ? UINT16_MAX : options->depth_maximum);
+        }
 
         // scopes option
         parser->parsing_eval = options->scopes_count > 0;

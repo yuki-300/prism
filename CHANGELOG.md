@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Added
 
+- Add a `depth_maximum` option (`pm_options_depth_maximum_set` in C, `depth_maximum:` in Ruby and JavaScript, `Options::depth_maximum` in Rust, a `depthMaximum` argument to `ParsingOptions.serialize` in Java) to lower the nesting limit when parsing on a thread whose native stack is smaller than the default limit requires.
 - Add `Version::CRuby4_0` to the Rust bindings. `Version::CRuby3_5` remains available but is deprecated in favor of the new name; both select Ruby 4.0 syntax.
 
 ## [2.0.0] - 2026-10-21

@@ -11846,6 +11846,15 @@ unsafe extern "C" {
         options: *mut pm_options_t,
         partial_script: bool,
     );
+    /** Set the maximum nesting depth on the given options struct. 0 (the default)
+ means PRISM_DEPTH_MAXIMUM; values above UINT16_MAX are clamped to it. Each
+ level costs roughly 500-600 bytes of native stack, so lower this on threads
+ with small stacks (a 1 MB thread fits about 1000-1500).
+
+ @param options The options struct to set the maximum nesting depth on.
+ @param depth_maximum The maximum nesting depth to set.
+*/
+    pub fn pm_options_depth_maximum_set(options: *mut pm_options_t, depth_maximum: u32);
     /** Allocate and zero out the scopes array on the given options struct.
 
  @param options The options struct to initialize the scopes array on.

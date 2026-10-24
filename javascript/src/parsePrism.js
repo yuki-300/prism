@@ -17,6 +17,7 @@ import { ParseResult, deserialize } from "./deserialize.js";
  *   version?: string,
  *   main_script?: boolean,
  *   partial_script?: boolean,
+ *   depth_maximum?: number,
  *   scopes?: (string[] | Scope)[]
  * }} Options
  *
@@ -163,6 +164,15 @@ function dumpOptions(options) {
 
   template.push("C");
   values.push(0);
+
+  template.push("L");
+  if (options.depth_maximum === undefined || options.depth_maximum === null) {
+    values.push(0);
+  } else if (Number.isInteger(options.depth_maximum) && options.depth_maximum > 0) {
+    values.push(Math.min(options.depth_maximum, 0xFFFFFFFF));
+  } else {
+    throw new Error("depth_maximum must be a positive integer");
+  }
 
   template.push("L");
   if (options.scopes) {

@@ -222,6 +222,14 @@ pm_options_partial_script_set(pm_options_t *options, bool partial_script) {
 }
 
 /**
+ * Set the maximum nesting depth on the given options struct.
+ */
+void
+pm_options_depth_maximum_set(pm_options_t *options, uint32_t depth_maximum) {
+    options->depth_maximum = depth_maximum;
+}
+
+/**
  * Get the freeze option on the given options struct.
  */
 bool
@@ -412,6 +420,9 @@ pm_options_read(pm_options_t *options, const char *data) {
     options->partial_script = ((uint8_t) *data++) > 0;
     options->freeze = ((uint8_t) *data++) > 0;
     options->attach_comments = ((uint8_t) *data++) > 0;
+
+    options->depth_maximum = pm_options_read_u32(data);
+    data += 4;
 
     uint32_t scopes_count = pm_options_read_u32(data);
     data += 4;

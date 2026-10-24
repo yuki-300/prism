@@ -238,6 +238,17 @@ PRISM_EXPORTED_FUNCTION void pm_options_main_script_set(pm_options_t *options, b
 PRISM_EXPORTED_FUNCTION void pm_options_partial_script_set(pm_options_t *options, bool partial_script) PRISM_NONNULL(1);
 
 /**
+ * Set the maximum nesting depth on the given options struct. 0 (the default)
+ * means PRISM_DEPTH_MAXIMUM; values above UINT16_MAX are clamped to it. Each
+ * level costs roughly 500-600 bytes of native stack, so lower this on threads
+ * with small stacks (a 1 MB thread fits about 1000-1500).
+ *
+ * @param options The options struct to set the maximum nesting depth on.
+ * @param depth_maximum The maximum nesting depth to set.
+ */
+PRISM_EXPORTED_FUNCTION void pm_options_depth_maximum_set(pm_options_t *options, uint32_t depth_maximum) PRISM_NONNULL(1);
+
+/**
  * Get the freeze option on the given options struct.
  *
  * @param options The options struct to get the freeze value from.

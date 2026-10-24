@@ -213,6 +213,11 @@ The final argument to `pm_serialize_parse` is an optional string that controls t
 | `1`     | command line flags         |
 | `1`     | syntax version, see [pm_options_version_t](https://github.com/ruby/prism/blob/main/include/prism/options.h) for valid values |
 | `1`     | whether or not the encoding is locked (should almost always be false) |
+| `1`     | whether or not the source is the main script |
+| `1`     | whether or not the source is a partial script |
+| `1`     | whether or not to freeze the AST |
+| `1`     | whether or not to attach comments to nodes |
+| `4`     | the maximum nesting depth, or `0` for the default |
 | `4`     | the number of scopes       |
 | ...     | the scopes                 |
 
@@ -232,6 +237,7 @@ Each scope is laid out as follows:
 | # bytes | field                      |
 | ------- | -------------------------- |
 | `4`     | the number of locals       |
+| `1`     | forwarding flags: `0x1` for `*`, `0x2` for `**`, `0x4` for `&`, `0x8` for `...` |
 | ...     | the locals                 |
 
 Each local is laid out as follows:
