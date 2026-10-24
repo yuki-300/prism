@@ -599,7 +599,7 @@ module Prism # :nodoc:
     # The set of options that are understood by the parsing APIs. Note that
     # raise_error is not listed here because it is deleted from the options
     # hash by raise_error_format_type before the options are dumped.
-    DUMP_OPTIONS_KEYS = [:attach_comments, :command_line, :encoding, :filepath, :freeze, :frozen_string_literal, :line, :main_script, :partial_script, :scopes, :version].freeze
+    DUMP_OPTIONS_KEYS = [:attach_comments, :command_line, :depth_maximum, :encoding, :filepath, :freeze, :frozen_string_literal, :line, :main_script, :partial_script, :scopes, :version].freeze
     private_constant :DUMP_OPTIONS_KEYS
 
     # Convert the given options into a serialized options string.
@@ -653,6 +653,17 @@ module Prism # :nodoc:
 
       template << "C"
       values << (options.fetch(:attach_comments, false) ? 1 : 0)
+
+      template << "L"
+      if (depth_maximum = options[:depth_maximum])
+        raise TypeError, "depth_maximum must be an Integer" unless depth_maximum.respond_to?(:to_int)
+        depth_maximum = depth_maximum.to_int
+        raise RangeError, "depth_maximum is too large" if depth_maximum > 2**63 - 1
+        raise ArgumentError, "depth_maximum must be positive" unless depth_maximum > 0
+        values << [depth_maximum, 0xFFFFFFFF].min
+      else
+        values << 0
+      end
 
       template << "L"
       if (scopes = options[:scopes])

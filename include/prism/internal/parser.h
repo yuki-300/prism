@@ -903,6 +903,12 @@ struct pm_parser_t {
      */
     bool attach_comments;
 
+    /*
+     * The nesting depth at which the parser stops recursing and reports a
+     * "nesting too deep" error instead.
+     */
+    uint16_t depth_maximum;
+
     /* Whether or not we're at the beginning of a command. */
     bool command_start;
 

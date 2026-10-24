@@ -154,6 +154,12 @@ struct pm_options_t {
      * sorted by start offset and every comment is assigned an owning node.
      */
     bool attach_comments;
+
+    /**
+     * The nesting depth at which the parser stops recursing and reports a
+     * "nesting too deep" error instead. 0 means PRISM_DEPTH_MAXIMUM.
+     */
+    uint32_t depth_maximum;
 };
 
 /* Free the internal memory associated with the options. */

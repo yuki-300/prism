@@ -236,6 +236,24 @@ test("scopes", () => {
   assert(result.errors.length === 0);
 });
 
+test("depth_maximum", () => {
+  const source = "x = " + "[".repeat(20) + "]".repeat(20);
+
+  let result = parse(source);
+  assert(result.errors.length === 0);
+
+  result = parse(source, { depth_maximum: 10 });
+  assert(result.errors[0].message === "nesting too deep");
+
+  // The serialized options are positional, so the scopes that follow
+  // depth_maximum must still be read correctly.
+  result = parse("foo", { depth_maximum: 100, scopes: [["foo"]] });
+  assert(statement(result) instanceof nodes.LocalVariableReadNode);
+
+  assert.throws(() => parse("1", { depth_maximum: 0 }));
+  assert.throws(() => parse("1", { depth_maximum: -1 }));
+});
+
 test("compactChildNodes() matches childNodes() without the nulls", () => {
   const sources = [
     "case a\nwhen b\n  c\nend",

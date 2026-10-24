@@ -93,12 +93,20 @@ public abstract class ParsingOptions {
     }
 
     public static byte[] serialize(byte[] filepath, int line, byte[] encoding, boolean frozenStringLiteral, EnumSet<CommandLine> commandLine, SyntaxVersion version, boolean encodingLocked, boolean mainScript, boolean partialScript, byte[][][] scopes) {
+        return serialize(filepath, line, encoding, frozenStringLiteral, commandLine, version, encodingLocked, mainScript, partialScript, 0, scopes);
+    }
+
+    public static byte[] serialize(byte[] filepath, int line, byte[] encoding, boolean frozenStringLiteral, EnumSet<CommandLine> commandLine, SyntaxVersion version, boolean encodingLocked, boolean mainScript, boolean partialScript, int depthMaximum, byte[][][] scopes) {
         Scope[] normalizedScopes = new Scope[scopes.length];
         for (int i = 0; i < scopes.length; i++) {
             normalizedScopes[i] = new Scope(scopes[i]);
         }
 
-        return serialize(filepath, line, encoding, frozenStringLiteral, commandLine, version, encodingLocked, mainScript, partialScript, normalizedScopes);
+        return serialize(filepath, line, encoding, frozenStringLiteral, commandLine, version, encodingLocked, mainScript, partialScript, depthMaximum, normalizedScopes);
+    }
+
+    public static byte[] serialize(byte[] filepath, int line, byte[] encoding, boolean frozenStringLiteral, EnumSet<CommandLine> commandLine, SyntaxVersion version, boolean encodingLocked, boolean mainScript, boolean partialScript, Scope[] scopes) {
+        return serialize(filepath, line, encoding, frozenStringLiteral, commandLine, version, encodingLocked, mainScript, partialScript, 0, scopes);
     }
 
     /**
@@ -113,10 +121,16 @@ public abstract class ParsingOptions {
      * @param encodingLocked whether the encoding is locked (should almost always be false)
      * @param mainScript whether the file is the main script
      * @param partialScript whether the file is a partial script
+     * @param depthMaximum the nesting depth at which the parser stops and reports a "nesting too deep" error, or 0 for the
+     *            default. Each level costs roughly 500-600 bytes of native stack, so lower it on threads with small stacks
      * @param scopes scopes surrounding the code that is being parsed with local variable names defined in every scope
      *            ordered from the outermost scope to the innermost one
      */
-    public static byte[] serialize(byte[] filepath, int line, byte[] encoding, boolean frozenStringLiteral, EnumSet<CommandLine> commandLine, SyntaxVersion version, boolean encodingLocked, boolean mainScript, boolean partialScript, Scope[] scopes) {
+    public static byte[] serialize(byte[] filepath, int line, byte[] encoding, boolean frozenStringLiteral, EnumSet<CommandLine> commandLine, SyntaxVersion version, boolean encodingLocked, boolean mainScript, boolean partialScript, int depthMaximum, Scope[] scopes) {
+        if (depthMaximum < 0) {
+            throw new IllegalArgumentException("depthMaximum must not be negative");
+        }
+
         final ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         // filepath
@@ -153,6 +167,9 @@ public abstract class ParsingOptions {
 
         // attachComments
         output.write(0);
+
+        // depthMaximum
+        write(output, serializeInt(depthMaximum));
 
         // scopes
 

@@ -118,6 +118,28 @@ module Prism
       assert Prism.parse_success?("yield", partial_script: true)
     end
 
+    def test_depth_maximum
+      source = "x = #{"[" * 20}#{"]" * 20}"
+      assert Prism.parse_success?(source)
+      assert_equal "nesting too deep", Prism.parse(source, depth_maximum: 10).errors.first.message
+
+      pattern = "case 0\nin #{"[" * 20}1#{"]" * 20}\nend"
+      assert Prism.parse_success?(pattern)
+      assert_equal "nesting too deep", Prism.parse(pattern, depth_maximum: 10).errors.first.message
+
+      # The serialized options are positional, so the scopes that follow
+      # depth_maximum must still be read correctly.
+      assert_kind_of Prism::LocalVariableReadNode, Prism.parse_statement("foo", depth_maximum: 100, scopes: [[:foo]])
+
+      assert Prism.parse_success?("x = [1]", depth_maximum: 2**32)
+
+      assert_raise(ArgumentError) { Prism.parse("1", depth_maximum: 0) }
+      assert_raise(ArgumentError) { Prism.parse("1", depth_maximum: -1) }
+      assert_raise(ArgumentError) { Prism.parse("1", depth_maximum: 0.5) }
+      assert_raise(TypeError) { Prism.parse("1", depth_maximum: "10") }
+      assert_raise(RangeError) { Prism.parse("1", depth_maximum: 2**64) }
+    end
+
     def test_attach_comments
       assert Prism.parse_success?("foo # comment", attach_comments: true)
       assert Prism.parse_success?("foo # comment", attach_comments: false)

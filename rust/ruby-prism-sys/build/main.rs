@@ -201,6 +201,7 @@ fn generate_bindings(ruby_include_path: &Path, clang_args: &[String], layout_tes
         .allowlist_function("pm_magic_comment_value")
         .allowlist_function("pm_node_list_append")
         .allowlist_function("pm_options_command_line_set")
+        .allowlist_function("pm_options_depth_maximum_set")
         .allowlist_function("pm_options_encoding_locked_set")
         .allowlist_function("pm_options_encoding_set")
         .allowlist_function("pm_options_filepath_set")

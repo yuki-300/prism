@@ -30,8 +30,8 @@ pub use self::parse_result::{Comment, CommentType, Comments, Diagnostic, Diagnos
 pub use self::string_query::{InvalidEncodingError, StringQuery};
 
 use ruby_prism_sys::{
-    pm_arena_new, pm_options_command_line_set, pm_options_encoding_locked_set, pm_options_encoding_set, pm_options_filepath_set, pm_options_free, pm_options_frozen_string_literal_set, pm_options_line_set, pm_options_main_script_set, pm_options_new, pm_options_partial_script_set,
-    pm_options_scope_forwarding_set, pm_options_scope_init, pm_options_scope_local_mut, pm_options_scope_mut, pm_options_scopes_init, pm_options_t, pm_options_version_set, pm_parse, pm_parser_new, pm_string_init,
+    pm_arena_new, pm_options_command_line_set, pm_options_depth_maximum_set, pm_options_encoding_locked_set, pm_options_encoding_set, pm_options_filepath_set, pm_options_free, pm_options_frozen_string_literal_set, pm_options_line_set, pm_options_main_script_set, pm_options_new,
+    pm_options_partial_script_set, pm_options_scope_forwarding_set, pm_options_scope_init, pm_options_scope_local_mut, pm_options_scope_mut, pm_options_scopes_init, pm_options_t, pm_options_version_set, pm_parse, pm_parser_new, pm_string_init,
 };
 
 /// The version of Ruby syntax to parse with.
@@ -166,6 +166,7 @@ pub struct Options {
     version: Option<Version>,
     main_script: bool,
     partial_script: bool,
+    depth_maximum: Option<u32>,
     scopes: Vec<Scope>,
 }
 
@@ -235,6 +236,14 @@ impl Options {
         self
     }
 
+    /// Sets the maximum nesting depth option. 0 means the default, and values
+    /// above 65535 are clamped to it.
+    #[must_use]
+    pub const fn depth_maximum(mut self, depth_maximum: u32) -> Self {
+        self.depth_maximum = Some(depth_maximum);
+        self
+    }
+
     /// Adds a scope to the options.
     #[must_use]
     pub fn scope(mut self, scope: Scope) -> Self {
@@ -298,6 +307,10 @@ impl Options {
 
         if self.partial_script {
             unsafe { pm_options_partial_script_set(opts, true) };
+        }
+
+        if let Some(depth_maximum) = self.depth_maximum {
+            unsafe { pm_options_depth_maximum_set(opts, depth_maximum) };
         }
 
         if !self.scopes.is_empty() {
@@ -1207,6 +1220,20 @@ end
         let node = result.node();
         let stmt = node.as_program_node().unwrap().statements().body().iter().next().unwrap();
         assert!(stmt.as_local_variable_read_node().is_some());
+    }
+
+    #[test]
+    fn parse_with_options_depth_maximum_test() {
+        use super::{parse_with_options, Options};
+
+        let source = b"x = [[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]";
+        let options = Options::default().depth_maximum(10).build();
+        let result = parse_with_options(source, &options);
+        assert!(result.errors().any(|error| error.message() == b"nesting too deep"));
+
+        let options = Options::default().build();
+        let result = parse_with_options(source, &options);
+        assert!(result.errors().next().is_none());
     }
 
     #[test]
