@@ -391,6 +391,9 @@ module Prism
       assert_warning("$foo", "a variable in void")
       assert_warning("$+", "a variable in void")
       assert_warning("$1", "a variable in void")
+      assert_warning("foo { _1; 1 }", "a variable in void")
+      assert_warning("foo { it; 1 }", "a variable in void", compare: RUBY_VERSION >= "3.4")
+      refute_warning("foo { it; 1 }", version: "3.3.0", compare: false)
 
       assert_warning("self", "self in void")
       assert_warning("nil", "nil in void")
